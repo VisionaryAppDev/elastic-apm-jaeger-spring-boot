@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--For development, it’s recommended to enable the debug mode. It will display a lot of useful INFO and also error message if any.-->
+<configuration debug="true">
+    <!-- each file should be at most 100MB, keep 180 days worth of history, but at most 20GB -->
+    <property name="maxHistory" value="180" />
+    <property name="fileSize" value="100MB" />
+    <property name="totalSizeCap" value="20GB" />
+    <property name="rootDir" value="/tmp/logs/log" />
+    <property name="archiveDir" value="/tmp/logs/archived" />
+    <springProperty scope="context" name="serviceName" source="spring.application.name"/>
+
+
+    <!--	Default Spring Log Pattern-->
+    <!--	Combine the two website to get the result-->
+    <!--	https://howtodoinjava.com/spring-boot2/logging/console-logging-configuration/-->
+    <!--	https://www.logicbig.com/tutorials/spring-framework/spring-boot/logging-console-pattern.html-->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+    <property name="CONSOLE_LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p})  %X{transaction.id}] %X{trace.id}] %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+
+
+    <!--	OUTPUT TO CONSOLE-->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are by default assigned the type "ch.qos.logback.classic.encoder.PatternLayoutEncoder" -->
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+
+    <!--	WRITE DEBUG TO FILE -->
+    <appender name="DEBUG-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${rootDir}/debug.log</file>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+
+        <!-- deny all events with a level below DEBUG, that is TRACE-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${archiveDir}/debug.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+            <maxFileSize>${fileSize}</maxFileSize>
+            <totalSizeCap>${totalSizeCap}</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+
+    <!--	WRITE ERROR TO FILE-->
+    <appender name="ERROR-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${rootDir}/error.log</file>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+
+        <!-- deny all events with a level below ERROR, that is WARN, INFO, DEBUG, TRACE-->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${archiveDir}/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+            <maxFileSize>${fileSize}</maxFileSize>
+            <totalSizeCap>${totalSizeCap}</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+
+    <root level="debug">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="DEBUG-FILE" />
+        <appender-ref ref="ERROR-FILE" />
+    </root>
+
+
+    <!--	HIDE SOME BEAN PRINT OUT-->
+    <logger name="org.springframework.boot.autoconfigure.logging" level="INFO"/>
+    <logger name="gov.customs" level="TRACE" additivity="true" />
+    <logger name="javax.net.debug" level="TRACE" additivity="true"/>
+</configuration>

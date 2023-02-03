@@ -1,0 +1,151 @@
+version: '3.9'
+services:
+  elastic:
+    container_name: elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.1
+    volumes:
+    #   - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro,Z
+       - ./data/elastic:/usr/share/elasticsearch/data:Z
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      node.name: es-1
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: elastic
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+      xpack.security.enrollment.enabled: true
+    networks:
+    - elastic
+    restart: unless-stopped
+
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:8.6.1
+#    volumes:
+#      - ./data/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro,Z
+    ports:
+      - "5601:5601"
+    environment:
+       KIBANA_SYSTEM_PASSWORD: elastic
+    networks:
+    - elastic
+    restart: unless-stopped
+
+
+  beat:
+    container_name: beat
+    image: docker.elastic.co/beats/filebeat:8.6.1
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro,Z
+      - /tmp/logs/log:/var/log
+    environment:
+      - ELASTICSEARCH_HOST="elastic:9200"
+      - KIBANA_HOST="kibana:5601"
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=elastic
+    networks:
+      - elastic
+
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:1.41.0
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14250:14250"
+      - "14268:14268"
+      - "14269:14269"
+      - "4317:4317"
+      - "4318:4318"
+      - "9411:9411"
+    environment:
+      - SPAN_STORAGE_TYPE=elasticsearch
+      - ES_SERVER_URLS=https://elastic:9200
+      - ES_SKIP_SSL_VERIFICATION=true
+    command:
+      - "--es.tls.enabled=true"
+      - "--es.tls.skip-host-verify=true"
+      - "--es.username=elastic"
+      - "--es.password=elastic"
+
+      # version 8.x isn't support yet
+      - "--es.version=7"
+      - "--es.create-index-templates=false"
+      - "--es.index-rollover-frequency-services=week"
+      - "--es.index-rollover-frequency-spans=week"
+
+      # Use jaeger as Elastic APM client. By enable this, Jaeger will send trace to Elastic APM as metric instead of log which result in Jaeger UI has no data
+      # - "--reporter.grpc.host-port=apm:8200"
+    networks:
+      - elastic
+
+
+  apm:
+    container_name: apm
+    image: docker.elastic.co/apm/apm-server:8.6.1
+    ports:
+      - "8200:8200"
+    command: >
+      apm-server -e
+        -E apm-server.rum.enabled=true
+        -E setup.kibana.host=kibana:5601
+        -E setup.template.settings.index.number_of_replicas=0
+        -E setup.dashboards.enabled=true
+        -E logging.level=debug
+        -E apm-server.kibana.enabled=true
+        -E apm-server.kibana.host=kibana:5601
+        -E apm-server.kibana.username=elastic
+        -E apm-server.kibana.password=elastic
+        -E output.elasticsearch.hosts=["https://elastic:9200"]
+        -E output.elasticsearch.username=elastic
+        -E output.elasticsearch.password=elastic
+        -E apm-server.jaeger.grpc.enabled=true
+        -E apm-server.jaeger.http.enabled=true
+        -E apm-server.jaeger.grpc.host=jaeger:14250
+        -E apm-server.jaeger.http.host=jaeger:14268
+        -E output.elasticsearch.ssl.verification_mode=none
+        -E ELASTIC_APM_VERIFY_SERVER_CERT=false
+#        -E apm-server.jaeger.grpc.auth_tag=authorization
+#        -E apm-server.secret_token=qwerty1234
+#        -E xpack.apm.secret_token=VFpTS0I0WUIycHBjRkkycE1IUDg6dkgzSWJVUUFSTW1zMFVwdnZnbXk0dw==
+#        -E secret_token=VFpTS0I0WUIycHBjRkkycE1IUDg6dkgzSWJVUUFSTW1zMFVwdnZnbXk0dw==
+#    environment:
+#      - apm-server.rum.enabled=true
+#      - apm-server.rum.javascript=false
+#      - apm-server.kibana.enabled=true
+#      - xpack.apm.enabled=true
+#      - apm-server.name=apm
+#      - apm-server.host=apm-server
+#      - xpack.apm.secret_token=VFpTS0I0WUIycHBjRkkycE1IUDg6dkgzSWJVUUFSTW1zMFVwdnZnbXk0dw==
+#      - xpack.apm.output.elasticsearch.hosts=http://192.168.1.101:9200
+#      - output.elasticsearch.hosts=["ElasticsearchAddress:9200"]
+#      - apm-server.host="0.0.0.0:8200"
+#      - setup.kibana.host="192.168.1.101:5601"
+#      - setup.template.enabled=true
+#      - apm-server.secret_token="SGZXVkJvWUJDOEZQTkNjVmJXYkM6LVVfM3dHTmNSMG1OcE05RUhXYktQUQ=="
+
+#    - apm-server.kibana.enabled=true
+#    - apm-server.kibana.host="http://0.0.0.0:5601"
+#    - output.elasticsearch.hosts=['http://0.0.0.0:9200']
+    # - apm-server.host="0.0.0.0:8200"
+    # - setup.kibana.host="kibana:5601"
+#    - setup.template.enabled=true
+#    - logging.to_files=false
+    networks:
+      - elastic
+
+networks:
+  elastic:
+    driver: bridge
+
