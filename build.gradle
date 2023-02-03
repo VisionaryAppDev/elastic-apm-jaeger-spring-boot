@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.0.2'
-	id 'io.spring.dependency-management' version '1.1.0'
+	id 'org.springframework.boot' version '2.7.8'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 }
 
 group = 'com.example'
@@ -21,19 +21,12 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	annotationProcessor 'org.projectlombok:lombok'
-//	implementation 'co.elastic.apm:elastic-apm-agent:1.35.0'
-//	implementation 'co.elastic.apm:apm-agent-attach:1.35.0'
-//	implementation 'co.elastic.apm:apm-agent-api:1.35.0'
-	implementation 'co.elastic.apm:apm-agent-attach:1.35.0'
-	implementation 'co.elastic.apm:apm-agent-api:1.35.0'
-//	implementation 'co.elastic.apm:apm-agent-plugins:1.22.0'
-//	implementation 'co.elastic.apm:apm-agent-rum-java:1.22.0'
+	implementation 'co.elastic.apm:apm-agent-attach:1.36.0'
+	implementation 'co.elastic.apm:apm-agent-api:1.36.0'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'io.opentracing.contrib:opentracing-spring-jaeger-cloud-starter:3.3.1'
+	implementation 'io.opentracing.contrib:opentracing-spring-cloud-starter:0.5.9'
 	runtimeOnly 'com.h2database:h2'
-
-
-//	implementation "co.elastic.apm:apm-opentracing:1.36.0"
-
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

@@ -1,4 +1,4 @@
-package com.example.elasticapm;
+package com.example.apm;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

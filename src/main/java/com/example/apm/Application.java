@@ -1,4 +1,4 @@
-package com.example.elasticapm;
+package com.example.apm;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

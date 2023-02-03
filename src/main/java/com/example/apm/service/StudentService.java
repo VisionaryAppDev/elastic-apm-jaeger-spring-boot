@@ -1,4 +1,4 @@
-package com.example.elasticapm.service;
+package com.example.apm.service;
 
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Span;
@@ -23,6 +23,7 @@ public class StudentService {
         log.info("hello");
         log.trace("hello");
 
+//        This will a separate transaction
 //        Transaction newTxn = ElasticApm.startTransaction();
 //        newTxn.addCustomContext("statement", "span.db.statement");
 //        newTxn.addCustomContext("ab", "13span.db.statement");
@@ -35,6 +36,6 @@ public class StudentService {
 
     public Object request() {
         RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject("https://www.eztools.io", Object.class);
+        return restTemplate.getForObject("https://www.eztools.io/api/uuid", Object.class);
     }
 }

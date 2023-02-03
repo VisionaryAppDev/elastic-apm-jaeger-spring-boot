@@ -1,10 +1,10 @@
-package com.example.elasticapm;
+package com.example.apm.controller;
 
 import co.elastic.apm.api.ElasticApm;
 import co.elastic.apm.api.Transaction;
-import com.example.elasticapm.model.Student;
-import com.example.elasticapm.repository.StudentRepository;
-import com.example.elasticapm.service.StudentService;
+import com.example.apm.model.Student;
+import com.example.apm.repository.StudentRepository;
+import com.example.apm.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -27,9 +27,8 @@ public class TestController {
         MDC.put("trace.id", ElasticApm.currentTransaction().getTraceId());
         MDC.put("transaction.id", ElasticApm.currentTransaction().getId());
 
-
         Student student = new Student();
-        student.setName("Nmae"+ Math.random());
+        student.setName("Name: " + Math.random());
         student.setDob(new Date());
         studentRepository.findAll();
 
@@ -38,12 +37,15 @@ public class TestController {
         studentService.request();
 
 
+        /// Random Error
+        if ((int) (Math.random() * 10) > 8) {
+            throw new RuntimeException("Error" + Math.random());
+        }
 
-//        if ((int) (Math.random() * 10) > 5) {
-//            span.setOutcome(Outcome.FAILURE);
-//            throw new RuntimeException("Error" + Math.random());
-//        }
+        String transactionId = ElasticApm.currentTransaction().getId();
+        String spanId = ElasticApm.currentSpan().getId();
+        String traceId = ElasticApm.currentSpan().getTraceId();
 
-        return " ::  " + UUID.randomUUID();
+        return String.format("=> Transaction ID: %s, Span ID: %s, Trace ID: %s", transactionId, spanId, traceId );
     }
 }
